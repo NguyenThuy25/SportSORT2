@@ -1,0 +1,7 @@
+__pycache__/
+/SportSORT/cache/*
+/SportSORT/checkpoints/*
+/SportSORT/data/*
+/SportSORT/jersey_team/models/*
+/SportSORT/jersey_team/rtmpose/ckpt/*
+/SportSORT/evaluation/TrackEval/data/res/*
