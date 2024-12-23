@@ -4,4 +4,5 @@ __pycache__/
 /SportSORT/data/*
 /SportSORT/jersey_team/models/*
 /SportSORT/jersey_team/rtmpose/ckpt/*
-/SportSORT/evaluation/TrackEval/data/res/*
+evaluation/TrackEval/data/res/*
+
