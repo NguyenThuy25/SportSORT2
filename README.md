@@ -18,9 +18,9 @@ cd ..
 
 ## Inference on SportsMOT dataset
 ### 1. Model preparation
-Download the [Pose Detector]([url](https://drive.google.com/drive/folders/1W4SbuDpotv8r-ZMwIyaaF4scqwXCTedV?usp=sharing)) model and put it in the SportSORT/jersey_team/rtmpose/ckpt folder.
+Download the [Pose Detector]((https://drive.google.com/drive/folders/1W4SbuDpotv8r-ZMwIyaaF4scqwXCTedV?usp=sharing)) model and put it in the SportSORT/jersey_team/rtmpose/ckpt folder.
 
-Download the weight of [PARSeq]([url](https://drive.google.com/drive/folders/1L5dYSFj_ARXHK0rx_qnDJmSs_RLjVzMG?usp=sharing)) model and put it in the SportSORT/jersey_team/models folder.
+Download the [PARSeq]((https://drive.google.com/drive/folders/1L5dYSFj_ARXHK0rx_qnDJmSs_RLjVzMG?usp=sharing)) model and put it in the SportSORT/jersey_team/models folder.
 
 Download the [Detector and ReID](https://drive.google.com/drive/folders/19Ikrz0yu3CUeO4soyeRfKPmk27oo6252?usp=sharing) model and put them in the SportSORT/checkpoint folder.
 
@@ -32,7 +32,7 @@ cd SportSORT/SportSORT
 python tools/infer.py --split train --online
 ```
 - Offline (Using cache):
-  Download the cache folder (include [detection and embedding]([url](https://drive.google.com/drive/folders/14gh9e5nQhqHsw77EfxZaUyn9NgPP0-Tq?usp=drive_link)), [team and jersey](https://drive.google.com/drive/folders/1guJ5jBCFYsZyM5CJELX7cUOA80CMwMpj?usp=sharing)) and put in the SportSORT/cache folder and run the bellow script to run SportSORT using cache data.
+  Download the cache folder (include [detection and embedding]((https://drive.google.com/drive/folders/14gh9e5nQhqHsw77EfxZaUyn9NgPP0-Tq?usp=drive_link)), [team and jersey](https://drive.google.com/drive/folders/1guJ5jBCFYsZyM5CJELX7cUOA80CMwMpj?usp=sharing)) and put in the SportSORT/cache folder and run the bellow script to run SportSORT using cache data.
 ```
 cd SportSORT/SportSORT
 python tools/infer.py --split train
