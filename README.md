@@ -32,7 +32,7 @@ cd SportSORT/SportSORT
 python tools/infer.py --split train --online
 ```
 - Offline (Using cache):
-  Download the [cache](https://drive.google.com/drive/folders/1guJ5jBCFYsZyM5CJELX7cUOA80CMwMpj?usp=sharing) folder (include detection, embedding, team and jersey) and put in the SportSORT/cache folder and run the bellow script to run SportSORT using cache data.
+  Download the cache folder (include [detection and embedding]([url](https://drive.google.com/drive/folders/14gh9e5nQhqHsw77EfxZaUyn9NgPP0-Tq?usp=drive_link)), [team and jersey](https://drive.google.com/drive/folders/1guJ5jBCFYsZyM5CJELX7cUOA80CMwMpj?usp=sharing)) and put in the SportSORT/cache folder and run the bellow script to run SportSORT using cache data.
 ```
 cd SportSORT/SportSORT
 python tools/infer.py --split train
@@ -40,3 +40,6 @@ python tools/infer.py --split train
 
 ## Implementation Detail
 Our main method is implemented in file "/SportSORT/tracker/SportSORT.py"
+
+## Acknowledgement
+The codebase is built highly upon [Deep-EIoU](https://github.com/hsiangwei0903/Deep-EIoU) and [jersey-number-pipeline](https://github.com/mkoshkina/jersey-number-pipeline), thanks for their wonderful work!
