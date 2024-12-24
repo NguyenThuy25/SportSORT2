@@ -5,4 +5,4 @@ __pycache__/
 /SportSORT/jersey_team/models/*
 /SportSORT/jersey_team/rtmpose/ckpt/*
 evaluation/TrackEval/data/res/*
-
+SportSORT/tools/infer_fps.py
