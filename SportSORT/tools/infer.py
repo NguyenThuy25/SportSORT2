@@ -57,7 +57,7 @@ def make_parser():
 
     # tracking args
     parser.add_argument("--track_high_thresh", type=float, default=0.6, help="tracking confidence threshold")
-    parser.add_argument("--track_low_thresh", default=0.1, type=float, help="lowest detection threshold valid for tracks")
+    parser.add_argument("--track_low_thresh", default=0.4, type=float, help="lowest detection threshold valid for tracks")
     parser.add_argument("--new_track_thresh", default=0.7, type=float, help="new track thresh")
     parser.add_argument("--track_buffer", type=int, default=60, help="the frames for keeping lost tracks")
     parser.add_argument("--match_thresh", type=float, default=0.8, help="matching threshold for tracking")
@@ -67,51 +67,57 @@ def make_parser():
     parser.add_argument("--mot20", dest="mot20", default=False, action="store_true", help="test mot20.")
 
     parser.add_argument("--with-reid", dest="with_reid", default=True, action="store_true", help="use Re-ID flag.")
-    parser.add_argument("--proximity_thresh", type=float, default=0.5, help="threshold for rejecting low overlap reid matches")
+    parser.add_argument("--proximity_thresh", type=float, default=0.6, help="threshold for rejecting low overlap reid matches")
     parser.add_argument("--appearance_thresh", type=float, default=0.25, help="threshold for rejecting low appearance similarity reid matches")
-    parser.add_argument("--iou_thres", type=float, default=0.5, help="filter out overlapping boxes")
+    parser.add_argument("--iou_thres", type=float, default=0.4, help="filter out overlapping boxes")
     parser.add_argument("--jersey_iou_thres", type=float, default=None, help="filter out overlapping boxes for jersey")
 
-    parser.add_argument("--init_expand_scale", type=float, default=0.7, help="initial expand scale")
-    parser.add_argument("--expand_scale_step", type=float, default=0.1, help="expand scale step")
+    parser.add_argument("--init_expand_scale", type=float, default=0.4, help="initial expand scale")
+    parser.add_argument("--expand_scale_step", type=float, default=0.4, help="expand scale step")
     parser.add_argument("--num_iteration", type=int, default=2, help="number of iteration")
-    parser.add_argument("--init_team_frame_thres", type=int, default=10, help="number of frame to start infer team")
-    parser.add_argument("--use_first_association_team", action="store_true", help="use first score association team")
-    parser.add_argument("--use_first_association_jersey", action="store_true", help="use first score association jersey")
+    parser.add_argument("--init_team_frame_thres", type=int, default=20, help="number of frame to start infer team")
+    # parser.add_argument("--use_first_association_team", action="store_true", help="use first score association team")
+    parser.add_argument("--use_first_association_team", type=bool, default=True, help="use first score association team")
+    # parser.add_argument("--use_first_association_jersey", action="store_true", help="use first score association jersey")
+    parser.add_argument("--use_first_association_jersey", type=bool, default=True, help="use first score association jersey")
 
     parser.add_argument("--ensemble_metric", type=str, default="bot", help="ensemble metric")
     parser.add_argument("--use_appearance_thresh", type=bool, default=False, help="use appearance threshold") # Default is False for Harmonic Mean
 
-    # parser.add_argument("--cache_detection_name", type=str, default="detection", help="cache detection name")
-    parser.add_argument("--cache_detection_name", type=str, default=None, help="cache detection name (leave empty to not load cache)")
+    parser.add_argument("--cache_detection_name", type=str, default="detection", help="cache detection name")
+    # parser.add_argument("--cache_detection_name", type=str, default=None, help="cache detection name (leave empty to not load cache)")
 
-    # parser.add_argument("--cache_embedding_name", type=str, default="embedding", help="cache embedding name") # embedding_sports
-    parser.add_argument("--cache_embedding_name", type=str, default=None, help="cache embedding name (leave empty to not load cache)")
-    parser.add_argument("--cache_jersey_name", type=str, default="jersey_num_infer", help="cache jersey name") # jersey_num_hockey
+    parser.add_argument("--cache_embedding_name", type=str, default="embedding", help="cache embedding name") # embedding_sports
+    # parser.add_argument("--cache_embedding_name", type=str, default=None, help="cache embedding name (leave empty to not load cache)")
+    parser.add_argument("--cache_jersey_name", type=str, default="jersey_finetune", help="cache jersey name") # jersey_num_hockey
     parser.add_argument("--cache_team_name", type=str, default="team_full", help="cache team name")
-    parser.add_argument("--use_fourth_association", action="store_true", help="use fourth association")
+    # parser.add_argument("--use_fourth_association", action="store_true", help="use fourth association")
+    parser.add_argument("--use_fourth_association", type=bool, default=True, help="use fourth association")
     parser.add_argument("--use_fourth_association_corner", action="store_true", help="use fourth association corner")
     parser.add_argument("--corner_ratio", type=float, default=0.15, help="corner ratio")
-    parser.add_argument("--use_fourth_association_team", action="store_true", help="use fourth association team")
-    parser.add_argument("--use_fourth_association_jersey", action="store_true", help="use fourth association jersey")
+    # parser.add_argument("--use_fourth_association_team", action="store_true", help="use fourth association team")
+    parser.add_argument("--use_fourth_association_team", type=bool, default=True, help="use fourth association team")
+    # parser.add_argument("--use_fourth_association_jersey", action="store_true", help="use fourth association jersey")
+    parser.add_argument("--use_fourth_association_jersey", type=bool, default=True, help="use fourth association jersey")
+
     parser.add_argument("--use_fourth_association_same_corner", action="store_true", help="use fourth association same corner")
-    parser.add_argument("--emb_match_thresh", type=float, default=0.3, help="embedding matching threshold")
+    parser.add_argument("--emb_match_thresh", type=float, default=0.25, help="embedding matching threshold")
     
-    parser.add_argument("--team_thres", type=float, default=0.7, help="thresh for predict team")
+    parser.add_argument("--team_thres", type=float, default=0.65, help="thresh for predict team")
     parser.add_argument("--jersey_thres", type=float, default=0.7, help="thresh for predict jersey")
-    parser.add_argument("--team_factor", type=float, default=None, help="multiple factor to dist when not match team")
+    parser.add_argument("--team_factor", type=float, default=2, help="multiple factor to dist when not match team")
     parser.add_argument("--team_factor_conf", action="store_true", help="multiple conf to dist when not match team") 
-    parser.add_argument("--jersey_factor", type=float, default=None, help="multiple to dist when not match jersey")
+    parser.add_argument("--jersey_factor", type=float, default=2, help="multiple to dist when not match jersey")
     parser.add_argument("--jersey_factor_conf", action="store_true", help="multiple conf to dist when not match jersey")
     
     parser.add_argument("--fixed_team_thresh", type=int, default=10, help="fixed team thresh")
     parser.add_argument("--fixed_jersey_thresh", type=int, default=30, help="fixed jersey thresh")
-    parser.add_argument("--max_new_len_thresh", type=int, default=10, help="max new len thresh")
+    parser.add_argument("--max_new_len_thresh", type=int, default=15, help="max new len thresh")
     parser.add_argument("--split", type=str, default="train", help="split for using train/val/test")
     parser.add_argument("--exp_name", type=str, default=None, help="experiment name")
-    parser.add_argument("--adt_team", default=False, action="store_true", help="use adaptive team flag.")
-    parser.add_argument("--adt_jersey", default=False, action="store_true", help="use adaptive jersey flag.")
-    parser.add_argument("--adt_alpha", type=float, default=0, help="adaptive alpha")
+    parser.add_argument("--adt_team", default=True, action="store_true", help="use adaptive team flag.")
+    parser.add_argument("--adt_jersey", default=True, action="store_true", help="use adaptive jersey flag.")
+    parser.add_argument("--adt_alpha", type=float, default=0.4, help="adaptive alpha")
 
     parser.add_argument("--online", default=False, action="store_true", help="online flag.")
 
@@ -332,18 +338,19 @@ def process_image_folder(predictor, extractor, jersey_recognizer, pose_model, co
     if not args.online:
         logger.info("Using cached data")
         all_detections, all_embeddings, all_jerseys, all_teams = load_cached_data(video_name, args)
-
+        # import IPython; IPython.embed()
+        # time.sleep(1)
         for frame_id, (det, embs, team_embs) in enumerate(zip(all_detections, all_embeddings, all_teams if all_teams is not None else []), start=1):
             jerseys = [j[5:] for j in all_jerseys if j[0] == frame_id] if all_jerseys is not None else None
-            results += track_objects(tracker, det, embs, team_embs, jerseys, frame_id, args)
+            embs = np.array(embs)
+            try:
+                results += track_objects(tracker, det, embs, team_embs, jerseys, frame_id, args)
+            except:
+                import IPython; IPython.embed()
+                time.sleep(1)
     else:
         logger.info("Processing images from folder")
         all_detections, all_embeddings = [], []
-        det_emb_total_time = 0
-        jersey_total_time = 0
-        team_total_time = 0
-        frame_time = 0
-        hungarian_time = 0
         for img_path in sorted(image_names):
             frame_time_start = time.time()
             if frame_id % 30 == 0:
@@ -364,9 +371,12 @@ def process_image_folder(predictor, extractor, jersey_recognizer, pose_model, co
                 jerseys = [j[5:] for j in jerseys] if jerseys is not None else None
                 jerseys = [np.array([float(item) for item in sublist]) for sublist in jerseys]
                 
+                hungarian_start = time.time()
                 results += track_objects(tracker, det, embs, team_embs, jerseys, frame_id=frame_id, args=args)
+                # results += track_objects(tracker, det, embs, team_embs, jerseys=None, frame_id=frame_id, args=args)
             frame_id += 1
     
+
 
 
     # Save results
@@ -375,7 +385,6 @@ def process_image_folder(predictor, extractor, jersey_recognizer, pose_model, co
         with open(res_file, 'w') as f:
             f.writelines(results)
         logger.info(f"Saved results to {res_file}")
-    
 
 def main(exp, args):
 
@@ -452,8 +461,6 @@ def main(exp, args):
     for video_folder in video_folders:
         process_image_folder(predictor, extractor, jersey_recognizer, pose_model, color_classifier, vis_folder, args, video_folder)
 
-
-    
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
