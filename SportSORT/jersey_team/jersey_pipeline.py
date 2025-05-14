@@ -20,7 +20,6 @@ import torch.backends.cudnn as cudnn
 from strhub.models.utils import load_from_checkpoint, parse_model_args
 from str import run_inference
 import string
-from rtmpose.top_down import init_model
 from rtmpose.utils.infer_utils import inference_topdown
 # import rtmpose.utils.register
 
@@ -32,6 +31,8 @@ STR_THRESHOLD = 0.7
 HEIGHT_MIN = 35
 WIDTH_MIN = 30
 RUN_TYPE = 'HOCKEY'
+# RUN_TYPE = 'SOCCER'
+
 
 def get_points(kps):
     if len(kps) < 12:
@@ -47,7 +48,7 @@ def get_points(kps):
     return result
 
 class JerseyNumberPipeline:
-    def __init__(self, video_path=None, det_path=None, visualize_out_path=None, cache_path=None, gt_jersey_path=None):
+    def __init__(self, pose_model, video_path=None, det_path=None, visualize_out_path=None, cache_path=None, gt_jersey_path=None):
         self.video_path = video_path
         self.det_path = det_path
         self.cache_path = cache_path
@@ -82,7 +83,8 @@ class JerseyNumberPipeline:
         self.legible_model = self.legible_model.to(device)
         self.legible_model.eval()
 
-        self.pose_model = init_model(config=config.dataset['SoccerNet']['pose_config'], checkpoint=config.dataset['SoccerNet']['pose_ckpt'], device=device)
+        # self.pose_model = init_model(config=config.dataset['SoccerNet']['pose_config'], checkpoint=config.dataset['SoccerNet']['pose_ckpt'], device=device)
+        self.pose_model = pose_model
         self.pose_config = config.dataset['SoccerNet']['pose_config']
         self.pose_ckpt = config.dataset['SoccerNet']['pose_ckpt']
         batch_size=1
@@ -117,7 +119,7 @@ class JerseyNumberPipeline:
 
         crop = img[y1:y2, x1:x2, :]
         return crop
-    
+
     def infer_one_image(self, image, detection, frame_name, video_name, save_img=False, save_cache=True):
         jersey_results = []
         for person_idx, bbox in enumerate(detection):
@@ -186,7 +188,9 @@ class JerseyNumberPipeline:
                 img_path = os.path.join(img_folder, frame)
                 image = cv2.imread(img_path)
                 # image = Image.open(img_path).convert('RGB')
-                self.infer_one_image(image, detection, int(frame.split('.')[0]), video, save_cache=save_cache)
+                result = self.infer_one_image(image, detection, int(frame.split('.')[0]), video, save_cache=save_cache)
+                import IPython; IPython.embed()
+                time.sleep(1)
                 # print(f"Done frame: {frame}")
             print(f"Done video: {video}")
     

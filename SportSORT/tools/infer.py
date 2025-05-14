@@ -6,8 +6,14 @@ import time
 import cv2
 import torch
 import sys
+
+
 sys.path.append('.')
 sys.path.append('./reid/torchreid')
+
+
+
+from jersey_team.rtmpose.top_down import init_model
 
 from loguru import logger
 
@@ -26,8 +32,10 @@ def make_parser():
     parser = argparse.ArgumentParser("SportSORT Demo")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
-    parser.add_argument("--path", default="./data/sportsmot_publish/dataset/", help="path to folder containing images")
+    # parser.add_argument("--path", default="./data/sportsmot_publish/dataset/", help="path to folder containing images")
 
+    parser.add_argument("--path", default="/mnt/banana/student/thuyntt/data/sportsmot_publish/dataset/", help="path to folder containing images")
+    
     parser.add_argument(
         "--output_dir", 
         default="../evaluation/TrackEval/data/res/",
@@ -76,10 +84,10 @@ def make_parser():
     parser.add_argument("--expand_scale_step", type=float, default=0.4, help="expand scale step")
     parser.add_argument("--num_iteration", type=int, default=2, help="number of iteration")
     parser.add_argument("--init_team_frame_thres", type=int, default=20, help="number of frame to start infer team")
-    # parser.add_argument("--use_first_association_team", action="store_true", help="use first score association team")
-    parser.add_argument("--use_first_association_team", type=bool, default=True, help="use first score association team")
-    # parser.add_argument("--use_first_association_jersey", action="store_true", help="use first score association jersey")
-    parser.add_argument("--use_first_association_jersey", type=bool, default=True, help="use first score association jersey")
+    parser.add_argument("--use_first_association_team", action="store_true", help="use first score association team")
+    # parser.add_argument("--use_first_association_team", type=bool, default=True, help="use first score association team")
+    parser.add_argument("--use_first_association_jersey", action="store_true", help="use first score association jersey")
+    # parser.add_argument("--use_first_association_jersey", type=bool, default=True, help="use first score association jersey")
 
     parser.add_argument("--ensemble_metric", type=str, default="bot", help="ensemble metric")
     parser.add_argument("--use_appearance_thresh", type=bool, default=False, help="use appearance threshold") # Default is False for Harmonic Mean
@@ -91,14 +99,14 @@ def make_parser():
     # parser.add_argument("--cache_embedding_name", type=str, default=None, help="cache embedding name (leave empty to not load cache)")
     parser.add_argument("--cache_jersey_name", type=str, default="jersey_finetune", help="cache jersey name") # jersey_num_hockey
     parser.add_argument("--cache_team_name", type=str, default="team_full", help="cache team name")
-    # parser.add_argument("--use_fourth_association", action="store_true", help="use fourth association")
-    parser.add_argument("--use_fourth_association", type=bool, default=True, help="use fourth association")
+    parser.add_argument("--use_fourth_association", action="store_true", help="use fourth association")
+    # parser.add_argument("--use_fourth_association", type=bool, default=True, help="use fourth association")
     parser.add_argument("--use_fourth_association_corner", action="store_true", help="use fourth association corner")
     parser.add_argument("--corner_ratio", type=float, default=0.15, help="corner ratio")
-    # parser.add_argument("--use_fourth_association_team", action="store_true", help="use fourth association team")
-    parser.add_argument("--use_fourth_association_team", type=bool, default=True, help="use fourth association team")
-    # parser.add_argument("--use_fourth_association_jersey", action="store_true", help="use fourth association jersey")
-    parser.add_argument("--use_fourth_association_jersey", type=bool, default=True, help="use fourth association jersey")
+    parser.add_argument("--use_fourth_association_team", action="store_true", help="use fourth association team")
+    # parser.add_argument("--use_fourth_association_team", type=bool, default=True, help="use fourth association team")
+    parser.add_argument("--use_fourth_association_jersey", action="store_true", help="use fourth association jersey")
+    # parser.add_argument("--use_fourth_association_jersey", type=bool, default=True, help="use fourth association jersey")
 
     parser.add_argument("--use_fourth_association_same_corner", action="store_true", help="use fourth association same corner")
     parser.add_argument("--emb_match_thresh", type=float, default=0.25, help="embedding matching threshold")
@@ -266,7 +274,35 @@ def load_cached_data(video_name, args):
 
     return all_detections, all_embeddings, all_jerseys, all_teams
 
+def load_cached_det_emb(video_name, args):
+    detection_file = (
+        osp.join(args.cache_dir, args.cache_detection_name, f"{video_name}.npy")
+        if args.cache_detection_name
+        else None
+    )
+    embedding_file = (
+        osp.join(args.cache_dir, args.cache_embedding_name, f"{video_name}.npy")
+        if args.cache_embedding_name
+        else None
+    )
 
+    # Attempt to load cached files if they exist
+    all_detections = None
+    all_embeddings = None
+
+    if detection_file and osp.exists(detection_file):
+        logger.info(f"Loading cached detections from {detection_file}")
+        all_detections = np.load(detection_file, allow_pickle=True)
+    elif detection_file:
+        logger.warning(f"Detection cache not found at {detection_file}")
+
+    if embedding_file and osp.exists(embedding_file):
+        logger.info(f"Loading cached embeddings from {embedding_file}")
+        all_embeddings = np.load(embedding_file, allow_pickle=True)
+    elif embedding_file:
+        logger.warning(f"Embedding cache not found at {embedding_file}")
+
+    return all_detections, all_embeddings
 
 def save_cache(embedding_file, detection_file, all_embeddings, all_detections):
     """Save embeddings and detections to cache."""
@@ -300,9 +336,36 @@ def process_frame(frame, predictor, extractor, timer, img_info):
             invalid_indices.append(i)
 
     det = np.delete(det, invalid_indices, axis=0)
+
     embs = extractor(cropped_imgs).cpu().detach().numpy()
     return det, embs
 
+# def process_frame_test(frame, predictor, extractor, timer, img_info):
+#     """Process a single frame to extract detections and embeddings."""
+#     outputs, img_info = predictor.inference(frame, timer)
+#     if outputs[0] is None:
+#         return None, None
+
+#     det = outputs[0].cpu().detach().numpy()
+#     scale = min(1440 / 1280, 800 / 720)
+#     det /= scale
+#     det = det[~np.any(det[:, :4] < 1, axis=1)]  # Remove invalid rows
+
+#     cropped_imgs = []
+#     invalid_indices = []
+#     for i, (x1, y1, x2, y2, *rest) in enumerate(det):
+#         x1, y1 = max(0, int(x1)), max(0, int(y1))
+#         x2, y2 = min(img_info["width"], int(x2)), min(img_info["height"], int(y2))
+#         if x2 > x1 and y2 > y1:
+#             cropped_imgs.append(frame[y1:y2, x1:x2])
+#         else:
+#             invalid_indices.append(i)
+
+#     det = np.delete(det, invalid_indices, axis=0)
+
+#     embs = extractor(cropped_imgs).cpu().detach().numpy()
+    
+#     return det, embs
 
 def track_objects(tracker, detections, embeddings, teams=None, jerseys=None, frame_id=1, args=None):
     """Track objects using detections and embeddings."""
@@ -340,17 +403,25 @@ def process_image_folder(predictor, extractor, jersey_recognizer, pose_model, co
         all_detections, all_embeddings, all_jerseys, all_teams = load_cached_data(video_name, args)
         # import IPython; IPython.embed()
         # time.sleep(1)
-        for frame_id, (det, embs, team_embs) in enumerate(zip(all_detections, all_embeddings, all_teams if all_teams is not None else []), start=1):
+        # for frame_id, (det, embs, team_embs) in enumerate(zip(all_detections, all_embeddings, all_teams if all_teams is not None else []), start=1):
+        for frame_id, (det, embs) in enumerate(zip(all_detections, all_embeddings), start=1):
             jerseys = [j[5:] for j in all_jerseys if j[0] == frame_id] if all_jerseys is not None else None
             embs = np.array(embs)
+            
             try:
+                if all_teams is not None:
+                    team_embs = all_teams[frame_id - 1]
+                else:
+                    team_embs = None
+                import IPython; IPython.embed()
+                time.sleep(1)
                 results += track_objects(tracker, det, embs, team_embs, jerseys, frame_id, args)
             except:
                 import IPython; IPython.embed()
                 time.sleep(1)
     else:
         logger.info("Processing images from folder")
-        all_detections, all_embeddings = [], []
+        all_detections, all_embeddings = load_cached_det_emb(video_name, args)
         for img_path in sorted(image_names):
             frame_time_start = time.time()
             if frame_id % 30 == 0:
@@ -359,21 +430,26 @@ def process_image_folder(predictor, extractor, jersey_recognizer, pose_model, co
             if frame is None:
                 break
             
-            det, embs = process_frame(frame, predictor, extractor, timer, img_info=None)
+            # det, embs = process_frame(frame, predictor, extractor, timer, img_info=None)
+            dets = all_detections[frame_id - 1]
+            embs = all_embeddings[frame_id - 1]
+            embs = np.array(embs)
+            jerseys = jersey_recognizer.infer_one_image(frame, dets, frame_id, video_name=None, save_img=False, save_cache=False)
 
-            jerseys = jersey_recognizer.infer_one_image(frame, det, frame_id, video_name=None, save_img=False, save_cache=False)
+            team_embs = color_classifier.infer_one_image(pose_model, frame, dets, team_names="team_full")
+        
 
-            team_embs = color_classifier.infer_one_image(pose_model, frame, det, team_names="team_full")
-
-            if det is not None:
-                all_detections.append(det)
-                all_embeddings.append(embs)
+            if dets is not None:
+                # all_detections.append(det)
+                # all_embeddings.append(embs)
                 jerseys = [j[5:] for j in jerseys] if jerseys is not None else None
                 jerseys = [np.array([float(item) for item in sublist]) for sublist in jerseys]
                 
-                hungarian_start = time.time()
-                results += track_objects(tracker, det, embs, team_embs, jerseys, frame_id=frame_id, args=args)
-                # results += track_objects(tracker, det, embs, team_embs, jerseys=None, frame_id=frame_id, args=args)
+                # hungarian_start = time.time()
+                import IPython; IPython.embed()
+                time.sleep(1)
+                results += track_objects(tracker, dets, embs, team_embs, jerseys, frame_id=frame_id, args=args)
+                    # results += track_objects(tracker, det, embs, team_embs, jerseys=None, frame_id=frame_id, args=args)
             frame_id += 1
     
 
@@ -417,7 +493,8 @@ def main(exp, args):
     model.eval()
 
     if not args.trt:
-        ckpt_file = args.ckpt or "checkpoints/best_ckpt.pth.tar"
+        # ckpt_file = args.ckpt or "checkpoints/best_ckpt.pth.tar"
+        ckpt_file = args.ckpt or "/mnt/banana/student/thuyntt/SportSORT2/SportSORT/checkpoints/best_ckpt.pth.tar"
         logger.info("Loading checkpoint")
         ckpt = torch.load(ckpt_file, map_location="cpu")
         model.load_state_dict(ckpt["model"])
@@ -444,14 +521,19 @@ def main(exp, args):
     
     extractor = FeatureExtractor(
         model_name='osnet_x1_0',
-        model_path='checkpoints/sports_model.pth.tar-60',
+        model_path='/mnt/banana/student/thuyntt/SportSORT2/SportSORT/checkpoints/sports_model.pth.tar-60',
         device='cuda'
         # device='cpu'
     )
+    pose_config = '/mnt/banana/student/thuyntt/SportSORT2/SportSORT/jersey_team/rtmpose/config/rtmpose-l_8xb256-420e_coco-256x192.py'
+    pose_checkpoint = '/mnt/banana/student/thuyntt/SportSORT2/SportSORT/jersey_team/rtmpose/ckpt/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth'
+    device = 'cuda:0'
+    pose_model = init_model(config=pose_config, checkpoint=pose_checkpoint, device=device)
 
-    jersey_recognizer = JerseyNumberPipeline()
+    jersey_recognizer = JerseyNumberPipeline(pose_model=pose_model)
 
-    pose_model = jersey_recognizer.pose_model
+    # pose_model = jersey_recognizer.pose_model
+
     color_classifier = PlayerClassification()
     # 
     args.path = osp.join(args.path, args.split)

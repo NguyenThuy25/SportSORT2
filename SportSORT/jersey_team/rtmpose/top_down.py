@@ -3,7 +3,9 @@ from itertools import zip_longest
 from typing import Optional
 
 from torch import Tensor
-
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from rtmpose.base import BasePoseEstimator
 from rtmpose.cspnext import CSPNeXt
 from rtmpose.data_preprocesser import PoseDataPreprocessor

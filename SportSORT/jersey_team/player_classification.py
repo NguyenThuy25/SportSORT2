@@ -4,6 +4,8 @@ from sklearn.cluster import KMeans
 import numpy as np
 import cv2
 
+# from rtmpose.top_down import init_model
+
 ROOT = './jersey_team/'
 import sys
 sys.path.append(ROOT)
@@ -86,7 +88,6 @@ class PlayerClassification:
             return crops
         
         crop_poses = []
-        back_crop_poses = []
         for j, crop in enumerate(crops):                                                                                                                                                                                                            
             pose_result = pose_results[j]
             
@@ -118,7 +119,7 @@ class PlayerClassification:
             masked_image = cv2.bitwise_and(crop, crop, mask=mask)
             
             # turn the background of masked_image to white
-            masked_image[mask == 0] = 255
+            # masked_image[mask == 0] = 255
             crop_poses.append(masked_image)
         
         # return crop_poses, back_crop_poses
@@ -128,10 +129,11 @@ class PlayerClassification:
         # Read the frame
         # team_folders = {team_name: os.path.join(cache_folder, team_name) for team_name in team_names}
         # Run pose estimation on the detections
+ 
         pose_results = inference_topdown(pose_model, frame, detection_data[:, :4], 'xyxy')
 
         # Extract crops for detected players
-        crops = self.get_crop(frame, detection_data)
+        crops = self.get_crop(frame, detection_data, type='xyxy')
 
         use_shoulder_hip = True
         use_knee_hip = True
@@ -143,9 +145,6 @@ class PlayerClassification:
 
         # Extract histogram features from the masked images
         features = self.get_hist_features(masked_images)
-
-        # Store the features for the team
-        # features_dict[team_names] = features
 
         return features
 
@@ -185,42 +184,42 @@ def save_data_pred(pose_model, cache_folder, img_folder, team_names):
     video_list = [x.split(".")[0] for x in npy_list]
 
     for video_name in video_list:
-        if video_name == 'v_0kUtTtmLaJA_c006':
-            detection_path = os.path.join(detection_folder, f"{video_name}.npy")
-            video_detection = np.load(detection_path, allow_pickle=True)
+        detection_path = os.path.join(detection_folder, f"{video_name}.npy")
+        video_detection = np.load(detection_path, allow_pickle=True)
 
-            video_length = video_detection.shape[0]
+        video_length = video_detection.shape[0]
+        
+        video_team_data = {}
+        for team_name, team_folder in team_folders.items():
+            video_team_data[team_name] = np.empty_like(video_detection)
+
+        # scale = min(1440/1280, 800/720)
+        pc = PlayerClassification()
+        for i in range(video_length):
+            # if video_name == 'v_2ChiYdg5bxI_c046':
+            frame_detection = video_detection[i]
+        
+            # ## ADD ##
+            frame_detection = np.array(frame_detection)
+            # ## ADD ##
+            # frame_detection /= scale
+            frame = cv2.imread(os.path.join(img_folder, video_name, "img1", f"{str(i+1).zfill(6)}.jpg"))
+            pose_results = inference_topdown(pose_model, frame, frame_detection[:, :4], 'xyxy')
+            crops = pc.get_crop(frame, frame_detection, type='xyxy')
+            # import IPython; IPython.embed()
+            # time.sleep(0.6)
             
-            video_team_data = {}
             for team_name, team_folder in team_folders.items():
-                video_team_data[team_name] = np.empty_like(video_detection)
+                use_shoulder_hip = team_names[team_name]["use_shoulder_hip"]
+                use_knee_hip = team_names[team_name]["use_knee_hip"]
+                crop_poses = pc.get_masked_image(crops, pose_results, use_shoulder_hip, use_knee_hip, frame_detection)
 
-            # scale = min(1440/1280, 800/720)
-            pc = PlayerClassification()
-            for i in range(video_length):
-                frame_detection = video_detection[i]
+                features = pc.get_hist_features(crop_poses)
+                video_team_data[team_name][i] = features
 
-                # ## ADD ##
-                frame_detection = np.array(frame_detection)
-                # ## ADD ##
-                # frame_detection /= scale
-                frame = cv2.imread(os.path.join(img_folder, video_name, "img1", f"{str(i+1).zfill(6)}.jpg"))
-                pose_results = inference_topdown(pose_model, frame, frame_detection[:, :4], 'xyxy')
-                crops = pc.get_crop(frame, frame_detection)
-                # import IPython; IPython.embed()
-                # time.sleep(0.6)
-                
-                for team_name, team_folder in team_folders.items():
-                    use_shoulder_hip = team_names[team_name]["use_shoulder_hip"]
-                    use_knee_hip = team_names[team_name]["use_knee_hip"]
-                    crop_poses = pc.get_masked_image(crops, pose_results, use_shoulder_hip, use_knee_hip, frame_detection)
-
-                    features = pc.get_hist_features(crop_poses)
-                    video_team_data[team_name][i] = features
-
-            # save with allow pickle
-            for team_name, team_folder in team_folders.items():
-                np.save(os.path.join(team_folder, f"{video_name}.npy"), video_team_data[team_name], allow_pickle=True)
+        # save with allow pickle
+        for team_name, team_folder in team_folders.items():
+            np.save(os.path.join(team_folder, f"{video_name}.npy"), video_team_data[team_name], allow_pickle=True)
         
         # print(f"Saved {video_name} in {team_folders}")
         
@@ -514,3 +513,34 @@ def add_sport_type():
                 sport_type_line = f"\nsportType = {sport_type}"
                 with open(seqinfo_path, "a") as f:
                     f.write(sport_type_line)
+
+
+
+if __name__ == "__main__":
+    img_folders = [
+        # "./data/sportsmot_publish/dataset/val/",
+        # "./data/sportsmot_publish/dataset/test/"
+        # "./data/sportsmot_publish/dataset/train"
+    ]
+    
+    cache_folders = [
+        "./cache/train",
+    ]
+    
+    ## INIT POSE ESTIMATION
+    pose_config = './jersey_team/rtmpose/config/rtmpose-l_8xb256-420e_coco-256x192.py'
+    pose_checkpoint = './jersey_team/rtmpose/ckpt/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth'
+    device = 'cuda:0'
+    pose_model = init_model(config=pose_config, checkpoint=pose_checkpoint, device=device)
+    
+    ###############################
+    team_names = {
+        # "team_raw": {"use_shoulder_hip": False, "use_knee_hip": False},
+        # "team_upper": {"use_shoulder_hip": True, "use_knee_hip": False},
+        # "team_lower": {"use_shoulder_hip": False, "use_knee_hip": True},
+        "team_full": {"use_shoulder_hip": True, "use_knee_hip": True},
+    }
+    
+    # PREDICTION BOX
+    for cache_folder, img_folder in zip(cache_folders, img_folders):
+        save_data_pred(pose_model, cache_folder, img_folder, team_names)

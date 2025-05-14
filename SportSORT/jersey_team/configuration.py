@@ -62,13 +62,13 @@ dataset = {'SoccerNet':
                         'raw_legible_result': 'challenge_raw_legible_vit.json'
                  },
                  'numbers_data': 'lmdb',
-                 'legibility_model': "models/legibility_resnet34_soccer_20240215.pth",
+                 'legibility_model': "./jersey_team/models/legibility_resnet34_soccer_20240215.pth",
                  'pose_ckpt': './jersey_team/rtmpose/ckpt/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth',
                  'pose_config': './jersey_team/rtmpose/config/rtmpose-l_8xb256-420e_coco-256x192.py',
                  'legibility_model_arch': "resnet34",
                  'legibility_model_url':  "https://drive.google.com/uc?id=18HAuZbge3z8TSfRiX_FzsnKgiBs-RRNw",
                  'pose_model_url': 'https://drive.google.com/uc?id=1A3ftF118IcxMn_QONndR-8dPWpf7XzdV',
-                 'str_model': 'models/parseq_epoch=24-step=2575-val_accuracy=95.6044-val_NED=96.3255.ckpt',
+                 'str_model': './jersey_team/models/parseq_epoch=7-step=7720-val_accuracy=98.8254-val_NED=99.0381.ckpt',
                  'str_model_url': "https://drive.google.com/uc?id=1uRln22tlhneVt3P6MePmVxBWSLMsL3bm",
                 },
            "Hockey": {
@@ -77,7 +77,7 @@ dataset = {'SoccerNet':
                  'numbers_data': 'jersey_number_dataset/jersey_numbers_lmdb',
                   'legibility_model':  './jersey_team/models/legibility_resnet34_soccer_20240215.pth',
                  'legibility_model_url':  "https://drive.google.com/uc?id=1RfxINtZ_wCNVF8iZsiMYuFOP7KMgqgDp",
-                 'str_model': './jersey_team/models/parseq_epoch=24-step=2575-val_accuracy=95.6044-val_NED=96.3255.ckpt',
+                 'str_model': './jersey_team/models/parseq_epoch=7-step=7720-val_accuracy=98.8254-val_NED=99.0381.ckpt',
                  'str_model_url': "https://drive.google.com/uc?id=1FyM31xvSXFRusN0sZH0EWXoHwDfB9WIE",
             }
         }
